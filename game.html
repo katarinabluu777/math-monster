@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>수학 몬스터 대모험 - 레벨 선택</title>
+</head>
+<body>
+  <main class="game-page">
+    <header class="game-header">
+      <div>
+        <h1>수학 몬스터 대모험</h1>
+        <p id="userEmail">로그인 확인 중...</p>
+      </div>
+
+      <div class="player-info">
+        <div>⭐ 별: <span id="stars">0</span></div>
+        <div>🏆 레벨: <span id="playerLevel">1</span></div>
+        <button id="logoutBtn">로그아웃</button>
+      </div>
+    </header>
+
+    <section class="world-section">
+      <h2 id="worldTitle">월드 1 : 초원의 시작</h2>
+
+      <div class="world-buttons" id="worldButtons"></div>
+
+      <div class="level-grid" id="levelGrid"></div>
+    </section>
+
+    <nav class="game-menu">
+      <button>⚔️ 전투</button>
+      <button>🎁 상점</button>
+      <button>🛡️ 용병</button>
+      <button>📖 도감</button>
+    </nav>
+  </main>
+
+  <script type="module" src="/src/game.js"></script>
+</body>
+</html>
