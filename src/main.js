@@ -183,6 +183,7 @@ let battleLoading = false;
 let battleRestarting = false;
 let battleSaving = false;
 let shopBusy = false;
+let shopReturnScreen = "game";
 
 
 /* =========================
@@ -205,6 +206,59 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
    Supabase 연결
 ========================= */
 
+function getAuthStorage() {
+  try {
+    const testKey =
+      "math-monster-storage-test";
+
+    window.localStorage.setItem(
+      testKey,
+      "ok"
+    );
+    window.localStorage.removeItem(testKey);
+
+    /*
+      기존 sessionStorage 로그인도 한 번만 옮겨서
+      브라우저를 다시 열었을 때 자동 로그인합니다.
+    */
+    for (
+      let index = 0;
+      index < window.sessionStorage.length;
+      index++
+    ) {
+      const key =
+        window.sessionStorage.key(index);
+
+      if (
+        key?.startsWith("sb-") &&
+        key.endsWith("-auth-token") &&
+        !window.localStorage.getItem(key)
+      ) {
+        const value =
+          window.sessionStorage.getItem(key);
+
+        if (value) {
+          window.localStorage.setItem(
+            key,
+            value
+          );
+        }
+      }
+    }
+
+    return window.localStorage;
+  } catch (error) {
+    console.warn(
+      "자동 로그인 저장소를 사용할 수 없어 현재 탭에서만 로그인합니다.",
+      error
+    );
+
+    return window.sessionStorage;
+  }
+}
+
+const authStorage = getAuthStorage();
+
 const supabase = createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY,
@@ -213,7 +267,7 @@ const supabase = createClient(
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      storage: window.sessionStorage
+      storage: authStorage
     }
   }
 );
@@ -274,11 +328,28 @@ attackBtn.addEventListener(
 
 document
   .getElementById("openShopBtn")
-  .addEventListener("click", showShopScreen);
+  .addEventListener(
+    "click",
+    () => showShopScreen("game")
+  );
+
+document
+  .getElementById("loginShopBtn")
+  .addEventListener(
+    "click",
+    () => showShopScreen("login")
+  );
+
+document
+  .getElementById("loginBottomShopBtn")
+  .addEventListener(
+    "click",
+    () => showShopScreen("login")
+  );
 
 document
   .getElementById("closeShopBtn")
-  .addEventListener("click", showGameScreen);
+  .addEventListener("click", closeShopScreen);
 
 unequipWeaponBtn.addEventListener(
   "click",
@@ -936,20 +1007,19 @@ function getEquippedWeaponAttack() {
   )?.attack || 0;
 }
 
-function showShopScreen() {
-  if (!currentProfile) {
-    return;
-  }
-
+function showShopScreen(returnScreen = "game") {
   stopMonsterAttack();
   battleFinished = true;
+  shopReturnScreen = returnScreen;
 
   loginScreen.classList.add("hidden");
   gameScreen.classList.add("hidden");
   battleScreen.classList.add("hidden");
   shopScreen.classList.remove("hidden");
 
-  shopMessage.textContent = "";
+  shopMessage.textContent = currentProfile
+    ? ""
+    : "구매와 장착을 하려면 먼저 로그인하세요.";
   renderShop();
 
   window.scrollTo({
@@ -958,16 +1028,24 @@ function showShopScreen() {
   });
 }
 
-function renderShop() {
-  if (!currentProfile) {
+function closeShopScreen() {
+  if (
+    shopReturnScreen === "login" ||
+    !currentProfile
+  ) {
+    showLoginScreen();
     return;
   }
 
+  showGameScreen();
+}
+
+function renderShop() {
   shopStars.textContent =
-    currentProfile.stars;
+    currentProfile?.stars || 0;
 
   const equippedWeapon =
-    getWeapon(currentProfile.equippedWeapon);
+    getWeapon(currentProfile?.equippedWeapon);
 
   equippedWeaponIcon.textContent =
     equippedWeapon?.icon || "🚫";
@@ -979,26 +1057,29 @@ function renderShop() {
     equippedWeapon?.attack || 0;
 
   unequipWeaponBtn.disabled =
-    shopBusy || !equippedWeapon;
+    shopBusy || !equippedWeapon || !currentProfile;
 
   weaponGrid.innerHTML = "";
 
   for (const weapon of WEAPONS) {
     const owned =
-      currentProfile.purchasedWeapons.includes(
+      currentProfile?.purchasedWeapons?.includes(
         weapon.id
-      );
+      ) || false;
 
     const equipped =
-      currentProfile.equippedWeapon === weapon.id;
+      currentProfile?.equippedWeapon === weapon.id;
 
     const canAfford =
-      currentProfile.stars >= weapon.price;
+      (currentProfile?.stars || 0) >= weapon.price;
 
     const card = document.createElement("article");
     card.className = "weapon-card";
 
-    if (equipped) {
+    if (!currentProfile) {
+      button.textContent = "로그인 필요";
+      button.disabled = true;
+    } else if (equipped) {
       card.classList.add("equipped");
     }
 

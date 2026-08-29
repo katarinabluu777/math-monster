@@ -13,6 +13,52 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   );
 }
 
+function getAuthStorage() {
+  try {
+    const testKey =
+      "math-monster-storage-test";
+
+    window.localStorage.setItem(
+      testKey,
+      "ok"
+    );
+    window.localStorage.removeItem(testKey);
+
+    for (
+      let index = 0;
+      index < window.sessionStorage.length;
+      index++
+    ) {
+      const key =
+        window.sessionStorage.key(index);
+
+      if (
+        key?.startsWith("sb-") &&
+        key.endsWith("-auth-token") &&
+        !window.localStorage.getItem(key)
+      ) {
+        const value =
+          window.sessionStorage.getItem(key);
+
+        if (value) {
+          window.localStorage.setItem(key, value);
+        }
+      }
+    }
+
+    return window.localStorage;
+  } catch (error) {
+    console.warn(
+      "자동 로그인 저장소를 사용할 수 없습니다.",
+      error
+    );
+
+    return window.sessionStorage;
+  }
+}
+
+const authStorage = getAuthStorage();
+
 const supabase = createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY,
@@ -21,7 +67,7 @@ const supabase = createClient(
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      storage: window.sessionStorage
+      storage: authStorage
     }
   }
 );
