@@ -49,6 +49,30 @@ const worldTitle =
 const logoutBtn =
   document.getElementById("logoutBtn");
 
+const levelScreen =
+  document.getElementById("levelScreen");
+
+const shopScreen =
+  document.getElementById("shopScreen");
+
+const shopStarCount =
+  document.getElementById("shopStarCount");
+
+const weaponGrid =
+  document.getElementById("weaponGrid");
+
+const equippedWeaponIcon =
+  document.getElementById("equippedWeaponIcon");
+
+const equippedWeaponName =
+  document.getElementById("equippedWeaponName");
+
+const equippedWeaponAttack =
+  document.getElementById("equippedWeaponAttack");
+
+const unequipBtn =
+  document.getElementById("unequipBtn");
+
 /* 월드 이름 */
 
 const worlds = [
@@ -64,8 +88,19 @@ const worlds = [
   "마왕성"
 ];
 
+const weapons = [
+  { id: "wood_sword", name: "나무 검", attack: 2, price: 5, icon: "🗡️" },
+  { id: "stone_sword", name: "돌 검", attack: 3, price: 15, icon: "⚔️" },
+  { id: "iron_sword", name: "철 검", attack: 5, price: 25, icon: "⚔️" },
+  { id: "diamond_sword", name: "다이아 검", attack: 8, price: 50, icon: "💎" },
+  { id: "emerald_sword", name: "에메랄드 검", attack: 11, price: 120, icon: "💚" },
+  { id: "nether_sword", name: "네더 검", attack: 15, price: 170, icon: "🔥" },
+  { id: "ultimate_sword", name: "종결 검", attack: 25, price: 300, icon: "🌟" }
+];
+
 let currentWorld = 1;
 let profile = null;
+let shopBusy = false;
 
 start();
 
@@ -92,7 +127,9 @@ async function start() {
       error: profileError
     } = await supabase
       .from("profiles")
-      .select("id, email, stars, level")
+      .select(
+        "id, email, stars, level, purchased_weapons, equipped_weapon"
+      )
       .eq("id", user.id)
       .maybeSingle();
 
@@ -191,8 +228,7 @@ function renderLevels() {
   levelGrid.innerHTML = "";
 
   worldTitle.textContent =
-    `월드 ${currentWorld} : ` +
-    worlds[currentWorld - 1];
+    `월드 ${currentWorld} : ${worlds[currentWorld - 1]}`;
 
   const startLevel =
     (currentWorld - 1) * 20 + 1;
@@ -262,12 +298,214 @@ function startStage(stage) {
     String(stage)
   );
 
+  const equippedWeapon = weapons.find(
+    (weapon) =>
+      weapon.id === profile?.equipped_weapon
+  );
+
+  sessionStorage.setItem(
+    "weaponAttackBonus",
+    String(equippedWeapon?.attack || 0)
+  );
+
   /*
     세 번째 전투 페이지로 이동합니다.
   */
   window.location.href =
     "/battle.html";
 }
+
+/* 상점 */
+
+function showShop() {
+  if (!profile) {
+    return;
+  }
+
+  levelScreen.classList.add("hidden");
+  shopScreen.classList.remove("hidden");
+  renderShop();
+}
+
+function closeShop() {
+  shopScreen.classList.add("hidden");
+  levelScreen.classList.remove("hidden");
+}
+
+function renderShop() {
+  if (!profile) {
+    return;
+  }
+
+  const purchasedWeapons = Array.isArray(
+    profile.purchased_weapons
+  )
+    ? profile.purchased_weapons
+    : [];
+
+  const equippedWeapon = weapons.find(
+    (weapon) =>
+      weapon.id === profile.equipped_weapon
+  );
+
+  stars.textContent = profile.stars;
+  shopStarCount.textContent = profile.stars;
+  equippedWeaponIcon.textContent =
+    equippedWeapon?.icon || "🚫";
+  equippedWeaponName.textContent =
+    equippedWeapon?.name || "장착한 검 없음";
+  equippedWeaponAttack.textContent =
+    equippedWeapon?.attack || 0;
+  unequipBtn.disabled = shopBusy || !equippedWeapon;
+
+  weaponGrid.innerHTML = "";
+
+  for (const weapon of weapons) {
+    const owned = purchasedWeapons.includes(
+      weapon.id
+    );
+    const equipped =
+      profile.equipped_weapon === weapon.id;
+
+    const card = document.createElement("article");
+    card.className = "weapon-card";
+
+    if (equipped) {
+      card.classList.add("equipped");
+    }
+
+    const icon = document.createElement("div");
+    icon.className = "weapon-icon";
+    icon.textContent = weapon.icon;
+
+    const name = document.createElement("h3");
+    name.textContent = weapon.name;
+
+    const attack = document.createElement("p");
+    attack.className = "weapon-attack";
+    attack.textContent = `공격력 +${weapon.attack}`;
+
+    const price = document.createElement("p");
+    price.className = "weapon-price";
+    price.textContent = `⭐ ${weapon.price}개`;
+
+    const button = document.createElement("button");
+    button.type = "button";
+
+    if (equipped) {
+      button.textContent = "장착 중";
+      button.disabled = true;
+    } else if (owned) {
+      button.textContent = "장착하기";
+      button.disabled = shopBusy;
+      button.addEventListener(
+        "click",
+        () => updateEquippedWeapon(weapon.id)
+      );
+    } else {
+      const canAfford = profile.stars >= weapon.price;
+      button.textContent = canAfford
+        ? "구매하기"
+        : "별 부족";
+      button.disabled = shopBusy || !canAfford;
+      button.addEventListener(
+        "click",
+        () => purchaseWeapon(weapon)
+      );
+    }
+
+    card.append(icon, name, attack, price, button);
+    weaponGrid.appendChild(card);
+  }
+}
+
+function applyShopData(data) {
+  profile.stars = Number(data.stars) || 0;
+  profile.purchased_weapons =
+    Array.isArray(data.purchased_weapons)
+      ? data.purchased_weapons
+      : [];
+  profile.equipped_weapon =
+    data.equipped_weapon || null;
+}
+
+async function purchaseWeapon(weapon) {
+  if (shopBusy || !profile) {
+    return;
+  }
+
+  shopBusy = true;
+  renderShop();
+
+  try {
+    const { data, error } = await supabase.rpc(
+      "purchase_weapon",
+      { p_weapon_id: weapon.id }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    applyShopData(data);
+    alert(`${weapon.name}을(를) 구매했습니다!`);
+  } catch (error) {
+    console.error(error);
+    alert(`구매 실패: ${error.message}`);
+  } finally {
+    shopBusy = false;
+    renderShop();
+  }
+}
+
+async function updateEquippedWeapon(weaponId) {
+  if (shopBusy || !profile) {
+    return;
+  }
+
+  shopBusy = true;
+  renderShop();
+
+  try {
+    const { data, error } = await supabase.rpc(
+      "equip_weapon",
+      { p_weapon_id: weaponId }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    applyShopData(data);
+  } catch (error) {
+    console.error(error);
+    alert(`장착 실패: ${error.message}`);
+  } finally {
+    shopBusy = false;
+    renderShop();
+  }
+}
+
+document
+  .getElementById("openShopBtn")
+  .addEventListener("click", showShop);
+
+document
+  .getElementById("bottomShopBtn")
+  .addEventListener("click", showShop);
+
+document
+  .getElementById("shopBackBtn")
+  .addEventListener("click", closeShop);
+
+document
+  .getElementById("shopToLevelBtn")
+  .addEventListener("click", closeShop);
+
+unequipBtn.addEventListener(
+  "click",
+  () => updateEquippedWeapon(null)
+);
 
 /* 로그아웃 */
 

@@ -225,6 +225,14 @@
         </p>
 
         <button
+          id="openShopBtn"
+          class="open-shop-button"
+          type="button"
+        >
+          🏪 무기 상점
+        </button>
+
+        <button
           id="gameLogoutBtn"
           type="button"
         >
@@ -272,6 +280,77 @@
       <div id="levelGrid"></div>
 
     </section>
+
+  </section>
+
+
+  <!-- =========================
+       무기 상점
+  ========================== -->
+  <section
+    id="shopScreen"
+    class="shop-screen hidden"
+  >
+
+    <header class="shop-header">
+
+      <button
+        id="closeShopBtn"
+        class="back-button"
+        type="button"
+      >
+        ← 레벨 선택
+      </button>
+
+      <div>
+        <h1>🏪 대장장이의 무기 상점</h1>
+        <p>검을 구매하고 장착해 공격력을 높이세요.</p>
+      </div>
+
+      <div class="shop-star-balance">
+        ⭐ 보유 별
+        <strong id="shopStars">0</strong>
+      </div>
+
+    </header>
+
+    <main class="shop-container">
+
+      <section class="equipped-weapon-card">
+        <span id="equippedWeaponIcon">🚫</span>
+        <div>
+          <small>현재 장착 무기</small>
+          <h2 id="equippedWeaponName">장착한 검 없음</h2>
+          <p>
+            전투 시작 공격력 +
+            <strong id="equippedWeaponAttack">0</strong>
+          </p>
+        </div>
+        <button
+          id="unequipWeaponBtn"
+          type="button"
+          disabled
+        >
+          장착 해제
+        </button>
+      </section>
+
+      <p
+        id="shopMessage"
+        class="shop-message"
+        role="status"
+        aria-live="polite"
+      ></p>
+
+      <section>
+        <h2 class="weapon-list-title">검 목록</h2>
+        <div
+          id="weaponGrid"
+          class="weapon-grid"
+        ></div>
+      </section>
+
+    </main>
 
   </section>
 

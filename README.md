@@ -33,6 +33,9 @@ npm run dev
 
 Supabase SQL Editor에 `supabase.sql` 내용을 붙여넣고 실행하세요.
 
+상점 기능을 추가한 기존 프로젝트도 최신 `supabase.sql`을 다시 실행해야 합니다.
+이 SQL은 구매한 무기와 장착 무기를 저장하는 컬럼 및 구매 함수를 추가합니다.
+
 ## 5. Vercel 환경변수
 
 Vercel Project Settings → Environment Variables에 아래 2개를 추가하세요.

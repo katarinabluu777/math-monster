@@ -17,6 +17,11 @@ create table if not exists public.profiles (
 
   level integer not null default 1,
 
+  purchased_weapons text[] not null
+    default '{}'::text[],
+
+  equipped_weapon text,
+
   created_at timestamp with time zone
     not null default now()
 );
@@ -32,6 +37,13 @@ alter column level set default 1;
 alter table public.profiles
 alter column created_at set default now();
 
+alter table public.profiles
+add column if not exists purchased_weapons text[]
+not null default '{}'::text[];
+
+alter table public.profiles
+add column if not exists equipped_weapon text;
+
 
 -- 3. 기존 데이터에 null이 있다면 정상 값으로 수정
 update public.profiles
@@ -41,6 +53,10 @@ where stars is null;
 update public.profiles
 set level = 1
 where level is null;
+
+update public.profiles
+set purchased_weapons = '{}'::text[]
+where purchased_weapons is null;
 
 
 -- 4. 잘못된 범위의 레벨 데이터 정리
@@ -77,6 +93,12 @@ drop constraint if exists profiles_stars_check;
 alter table public.profiles
 drop constraint if exists profiles_level_check;
 
+alter table public.profiles
+drop constraint if exists profiles_purchased_weapons_check;
+
+alter table public.profiles
+drop constraint if exists profiles_equipped_weapon_check;
+
 
 -- 7. 별과 레벨 범위 제한
 alter table public.profiles
@@ -86,6 +108,27 @@ check (stars >= 0);
 alter table public.profiles
 add constraint profiles_level_check
 check (level >= 1 and level <= 51);
+
+alter table public.profiles
+add constraint profiles_purchased_weapons_check
+check (
+  purchased_weapons <@ array[
+    'wood_sword',
+    'stone_sword',
+    'iron_sword',
+    'diamond_sword',
+    'emerald_sword',
+    'nether_sword',
+    'ultimate_sword'
+  ]::text[]
+);
+
+alter table public.profiles
+add constraint profiles_equipped_weapon_check
+check (
+  equipped_weapon is null
+  or equipped_weapon = any(purchased_weapons)
+);
 
 
 -- 8. Row Level Security 활성화
@@ -212,3 +255,119 @@ where profiles.id = users.id
     profiles.email is null
     or profiles.email = ''
   );
+
+
+-- 17. 별 차감과 무기 구매를 한 번에 안전하게 처리
+create or replace function public.purchase_weapon(
+  p_weapon_id text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  weapon_price integer;
+  result jsonb;
+begin
+  if auth.uid() is null then
+    raise exception '로그인이 필요합니다.';
+  end if;
+
+  weapon_price := case p_weapon_id
+    when 'wood_sword' then 5
+    when 'stone_sword' then 15
+    when 'iron_sword' then 25
+    when 'diamond_sword' then 50
+    when 'emerald_sword' then 120
+    when 'nether_sword' then 170
+    when 'ultimate_sword' then 300
+    else null
+  end;
+
+  if weapon_price is null then
+    raise exception '존재하지 않는 무기입니다.';
+  end if;
+
+  update public.profiles
+  set
+    stars = stars - weapon_price,
+    purchased_weapons = array_append(
+      purchased_weapons,
+      p_weapon_id
+    )
+  where id = auth.uid()
+    and stars >= weapon_price
+    and not p_weapon_id = any(purchased_weapons)
+  returning jsonb_build_object(
+    'stars', stars,
+    'purchased_weapons', purchased_weapons,
+    'equipped_weapon', equipped_weapon
+  ) into result;
+
+  if result is null then
+    if exists (
+      select 1
+      from public.profiles
+      where id = auth.uid()
+        and p_weapon_id = any(purchased_weapons)
+    ) then
+      raise exception '이미 구매한 무기입니다.';
+    end if;
+
+    raise exception '별이 부족합니다.';
+  end if;
+
+  return result;
+end;
+$$;
+
+
+-- 18. 구매한 무기만 장착할 수 있도록 처리
+create or replace function public.equip_weapon(
+  p_weapon_id text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  result jsonb;
+begin
+  if auth.uid() is null then
+    raise exception '로그인이 필요합니다.';
+  end if;
+
+  update public.profiles
+  set equipped_weapon = p_weapon_id
+  where id = auth.uid()
+    and (
+      p_weapon_id is null
+      or p_weapon_id = any(purchased_weapons)
+    )
+  returning jsonb_build_object(
+    'stars', stars,
+    'purchased_weapons', purchased_weapons,
+    'equipped_weapon', equipped_weapon
+  ) into result;
+
+  if result is null then
+    raise exception '구매하지 않은 무기는 장착할 수 없습니다.';
+  end if;
+
+  return result;
+end;
+$$;
+
+revoke all on function public.purchase_weapon(text)
+from public, anon;
+
+revoke all on function public.equip_weapon(text)
+from public, anon;
+
+grant execute on function public.purchase_weapon(text)
+to authenticated;
+
+grant execute on function public.equip_weapon(text)
+to authenticated;

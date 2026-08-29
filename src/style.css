@@ -560,6 +560,345 @@ button:disabled {
 
 
 /* =========================
+   무기 상점
+========================= */
+
+.open-shop-button {
+  margin-bottom: 4px;
+  background: linear-gradient(#f3ad32, #a85c00);
+  box-shadow: 0 4px 0 #683700;
+}
+
+.game-page {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: bold;
+}
+
+.world-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  color: #35230e;
+  background: rgba(255, 242, 211, 0.97);
+  border: 5px solid #754316;
+  border-radius: 20px;
+}
+
+.world-section h2 {
+  text-align: center;
+}
+
+.world-buttons,
+.game-menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.world-buttons {
+  margin-bottom: 22px;
+}
+
+.world-buttons .active-world {
+  background: linear-gradient(#f6b13e, #a75a00);
+}
+
+.level-btn {
+  min-height: 76px;
+  font-size: 18px;
+}
+
+.level-btn.cleared {
+  background: linear-gradient(#71ff77, #15992c);
+}
+
+.level-btn.current {
+  color: #3a2500;
+  background: linear-gradient(#ffe45c, #ff9900);
+}
+
+.level-btn.locked {
+  background: linear-gradient(#9ca3af, #4b5563);
+  opacity: 0.7;
+}
+
+.game-menu {
+  max-width: 1200px;
+  margin: 18px auto 0;
+}
+
+.shop-screen {
+  min-height: 100vh;
+  padding: 24px;
+  background:
+    radial-gradient(
+      circle at 50% 15%,
+      rgba(255, 206, 92, 0.22),
+      transparent 28%
+    ),
+    linear-gradient(#261a35, #664321 58%, #25202b);
+}
+
+.shop-header {
+  display: grid;
+  grid-template-columns: 180px 1fr 180px;
+  align-items: center;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto 24px;
+  padding: 18px 22px;
+  background: rgba(16, 12, 20, 0.9);
+  border: 3px solid #d49b45;
+  border-radius: 18px;
+  text-align: center;
+}
+
+.shop-topbar {
+  display: grid;
+  grid-template-columns: 120px 1fr 160px;
+  align-items: center;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto 24px;
+  padding: 18px 22px;
+  background: rgba(16, 12, 20, 0.9);
+  border: 3px solid #d49b45;
+  border-radius: 18px;
+  text-align: center;
+}
+
+.shop-topbar h1 {
+  margin: 0;
+  color: #ffd76a;
+}
+
+.shop-stars {
+  color: #ffe56b;
+  font-weight: bold;
+}
+
+.shop-stars strong {
+  display: block;
+  font-size: 26px;
+}
+
+.shop-main {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 18px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.shop-side-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shop-menu.active {
+  background: linear-gradient(#f3ad32, #a85c00);
+}
+
+.shop-content {
+  padding: 24px;
+  color: #35230e;
+  background: rgba(255, 242, 211, 0.97);
+  border: 5px solid #754316;
+  border-radius: 20px;
+}
+
+.blacksmith-area {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px;
+  color: white;
+  background: #392a25;
+  border-radius: 14px;
+}
+
+.blacksmith {
+  font-size: 64px;
+}
+
+.blacksmith-text h2,
+.blacksmith-text p {
+  margin: 5px 0;
+}
+
+.weapon-effect-box,
+.equipped-box {
+  margin-top: 16px;
+  padding: 16px;
+  background: #fffaf0;
+  border: 3px solid #b8894e;
+  border-radius: 14px;
+}
+
+.equipped-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.equipped-icon {
+  font-size: 52px;
+}
+
+.weapon-section {
+  margin-top: 20px;
+}
+
+.shop-bottom-menu {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 20px auto 0;
+}
+
+.shop-header h1 {
+  margin: 0 0 6px;
+  color: #ffd76a;
+}
+
+.shop-header p {
+  margin: 0;
+  color: #efe1c3;
+}
+
+.shop-star-balance {
+  padding: 12px;
+  color: #ffe56b;
+  background: #30281d;
+  border: 2px solid #8e743e;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+.shop-star-balance strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 26px;
+}
+
+.shop-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  color: #35230e;
+  background: rgba(255, 242, 211, 0.97);
+  border: 5px solid #754316;
+  border-radius: 20px;
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.4);
+}
+
+.equipped-weapon-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  color: white;
+  background: linear-gradient(135deg, #3a2a55, #1e172e);
+  border: 3px solid #bda2e6;
+  border-radius: 16px;
+}
+
+.equipped-weapon-card > span {
+  font-size: 62px;
+}
+
+.equipped-weapon-card small {
+  color: #d6c5ef;
+  font-weight: bold;
+}
+
+.equipped-weapon-card h2,
+.equipped-weapon-card p {
+  margin: 5px 0;
+}
+
+.shop-message {
+  min-height: 26px;
+  margin: 18px 0 8px;
+  color: #6c3f00;
+  font-weight: bold;
+  text-align: center;
+}
+
+.weapon-list-title {
+  margin: 8px 0 16px;
+  text-align: center;
+}
+
+.weapon-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.weapon-card {
+  padding: 18px;
+  background: #fffaf0;
+  border: 3px solid #b8894e;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 6px 0 #7a5125;
+}
+
+.weapon-card.equipped {
+  background: #f1e6ff;
+  border-color: #8158bf;
+  box-shadow: 0 6px 0 #50317e;
+}
+
+.weapon-icon {
+  min-height: 62px;
+  font-size: 50px;
+}
+
+.weapon-card h3 {
+  margin: 8px 0;
+  font-size: 21px;
+}
+
+.weapon-attack {
+  margin: 8px 0;
+  color: #b52222;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.weapon-price {
+  margin: 8px 0 14px;
+  color: #775000;
+  font-weight: bold;
+}
+
+.weapon-card button {
+  width: 100%;
+  background: linear-gradient(#ee9e2e, #a85200);
+  box-shadow: 0 4px 0 #653000;
+}
+
+.weapon-card button:disabled {
+  background: linear-gradient(#8a8a8a, #505050);
+  box-shadow: 0 4px 0 #303030;
+  opacity: 0.75;
+}
+
+
+/* =========================
    3번째 화면: 전투
 ========================= */
 
@@ -850,6 +1189,10 @@ button:disabled {
 ========================= */
 
 @media (max-width: 1000px) {
+  .weapon-grid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
   #levelGrid {
     grid-template-columns:
       repeat(5, minmax(65px, 1fr));
@@ -935,6 +1278,33 @@ button:disabled {
     align-items: stretch;
   }
 
+  .shop-header {
+    grid-template-columns: 1fr;
+  }
+
+  .player-info {
+    flex-wrap: wrap;
+  }
+
+  .shop-topbar,
+  .shop-main {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-side-menu {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .shop-header .back-button {
+    justify-self: stretch;
+  }
+
+  .equipped-weapon-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
   .battle-header {
     grid-template-columns: 1fr;
     text-align: center;
@@ -943,6 +1313,20 @@ button:disabled {
   .back-button,
   .battle-stars {
     justify-self: center;
+  }
+}
+
+@media (max-width: 540px) {
+  .shop-screen {
+    padding: 12px;
+  }
+
+  .shop-container {
+    padding: 16px;
+  }
+
+  .weapon-grid {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -31,6 +31,30 @@ const gameScreen =
 const battleScreen =
   document.getElementById("battleScreen");
 
+const shopScreen =
+  document.getElementById("shopScreen");
+
+const shopStars =
+  document.getElementById("shopStars");
+
+const shopMessage =
+  document.getElementById("shopMessage");
+
+const weaponGrid =
+  document.getElementById("weaponGrid");
+
+const equippedWeaponIcon =
+  document.getElementById("equippedWeaponIcon");
+
+const equippedWeaponName =
+  document.getElementById("equippedWeaponName");
+
+const equippedWeaponAttack =
+  document.getElementById("equippedWeaponAttack");
+
+const unequipWeaponBtn =
+  document.getElementById("unequipWeaponBtn");
+
 const gameUserEmail =
   document.getElementById("gameUserEmail");
 
@@ -119,6 +143,16 @@ const MONSTER_DAMAGE = 1;
 
 const CLEAR_STAR_REWARD = 10;
 
+const WEAPONS = [
+  { id: "wood_sword", name: "나무 검", attack: 2, price: 5, icon: "🗡️" },
+  { id: "stone_sword", name: "돌 검", attack: 3, price: 15, icon: "⚔️" },
+  { id: "iron_sword", name: "철 검", attack: 5, price: 25, icon: "⚔️" },
+  { id: "diamond_sword", name: "다이아 검", attack: 8, price: 50, icon: "💎" },
+  { id: "emerald_sword", name: "에메랄드 검", attack: 11, price: 120, icon: "💚" },
+  { id: "nether_sword", name: "네더 검", attack: 15, price: 170, icon: "🔥" },
+  { id: "ultimate_sword", name: "종결 검", attack: 25, price: 300, icon: "🌟" }
+];
+
 
 /* =========================
    현재 사용자 정보
@@ -148,6 +182,7 @@ let battleFinished = true;
 let battleLoading = false;
 let battleRestarting = false;
 let battleSaving = false;
+let shopBusy = false;
 
 
 /* =========================
@@ -235,6 +270,19 @@ restartBattleBtn.addEventListener(
 attackBtn.addEventListener(
   "click",
   submitAnswer
+);
+
+document
+  .getElementById("openShopBtn")
+  .addEventListener("click", showShopScreen);
+
+document
+  .getElementById("closeShopBtn")
+  .addEventListener("click", showGameScreen);
+
+unequipWeaponBtn.addEventListener(
+  "click",
+  () => equipWeapon(null)
 );
 
 
@@ -649,7 +697,7 @@ async function loadProfile() {
     await supabase
       .from("profiles")
       .select(
-        "email, stars, level"
+        "email, stars, level, purchased_weapons, equipped_weapon"
       )
       .eq("id", currentUser.id)
       .maybeSingle();
@@ -678,6 +726,16 @@ async function loadProfile() {
         0,
         Number(data.stars) || 0
       ),
+
+    purchasedWeapons:
+      Array.isArray(data.purchased_weapons)
+        ? data.purchased_weapons
+        : [],
+
+    equippedWeapon:
+      typeof data.equipped_weapon === "string"
+        ? data.equipped_weapon
+        : null,
 
     /*
       1~51까지 허용합니다.
@@ -731,6 +789,9 @@ function updateProfileDisplay() {
 
   battleStars.textContent =
     currentProfile.stars;
+
+  shopStars.textContent =
+    currentProfile.stars;
 }
 
 
@@ -746,6 +807,10 @@ function showLoginScreen() {
   );
 
   battleScreen.classList.add(
+    "hidden"
+  );
+
+  shopScreen.classList.add(
     "hidden"
   );
 
@@ -788,6 +853,10 @@ function showGameScreen() {
     "hidden"
   );
 
+  shopScreen.classList.add(
+    "hidden"
+  );
+
   gameScreen.classList.remove(
     "hidden"
   );
@@ -824,6 +893,210 @@ function showLevelScreen() {
   answerInput.value = "";
 
   showGameScreen();
+}
+
+
+/* =========================
+   무기 상점
+========================= */
+
+function getWeapon(weaponId) {
+  return WEAPONS.find(
+    (weapon) => weapon.id === weaponId
+  ) || null;
+}
+
+function getEquippedWeaponAttack() {
+  return getWeapon(
+    currentProfile?.equippedWeapon
+  )?.attack || 0;
+}
+
+function showShopScreen() {
+  if (!currentProfile) {
+    return;
+  }
+
+  stopMonsterAttack();
+  battleFinished = true;
+
+  loginScreen.classList.add("hidden");
+  gameScreen.classList.add("hidden");
+  battleScreen.classList.add("hidden");
+  shopScreen.classList.remove("hidden");
+
+  shopMessage.textContent = "";
+  renderShop();
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+function renderShop() {
+  if (!currentProfile) {
+    return;
+  }
+
+  shopStars.textContent =
+    currentProfile.stars;
+
+  const equippedWeapon =
+    getWeapon(currentProfile.equippedWeapon);
+
+  equippedWeaponIcon.textContent =
+    equippedWeapon?.icon || "🚫";
+
+  equippedWeaponName.textContent =
+    equippedWeapon?.name || "장착한 검 없음";
+
+  equippedWeaponAttack.textContent =
+    equippedWeapon?.attack || 0;
+
+  unequipWeaponBtn.disabled =
+    shopBusy || !equippedWeapon;
+
+  weaponGrid.innerHTML = "";
+
+  for (const weapon of WEAPONS) {
+    const owned =
+      currentProfile.purchasedWeapons.includes(
+        weapon.id
+      );
+
+    const equipped =
+      currentProfile.equippedWeapon === weapon.id;
+
+    const canAfford =
+      currentProfile.stars >= weapon.price;
+
+    const card = document.createElement("article");
+    card.className = "weapon-card";
+
+    if (equipped) {
+      card.classList.add("equipped");
+    }
+
+    const icon = document.createElement("div");
+    icon.className = "weapon-icon";
+    icon.textContent = weapon.icon;
+
+    const name = document.createElement("h3");
+    name.textContent = weapon.name;
+
+    const attack = document.createElement("p");
+    attack.className = "weapon-attack";
+    attack.textContent = `공격력 +${weapon.attack}`;
+
+    const price = document.createElement("p");
+    price.className = "weapon-price";
+    price.textContent = `⭐ ${weapon.price}개`;
+
+    const button = document.createElement("button");
+    button.type = "button";
+
+    if (equipped) {
+      button.textContent = "장착 중";
+      button.disabled = true;
+    } else if (owned) {
+      button.textContent = "장착하기";
+      button.disabled = shopBusy;
+      button.addEventListener(
+        "click",
+        () => equipWeapon(weapon.id)
+      );
+    } else {
+      button.textContent = canAfford
+        ? "구매하기"
+        : "별 부족";
+      button.disabled = shopBusy || !canAfford;
+      button.addEventListener(
+        "click",
+        () => purchaseWeapon(weapon)
+      );
+    }
+
+    card.append(
+      icon,
+      name,
+      attack,
+      price,
+      button
+    );
+
+    weaponGrid.appendChild(card);
+  }
+}
+
+async function purchaseWeapon(weapon) {
+  if (shopBusy || !currentProfile) {
+    return;
+  }
+
+  shopBusy = true;
+  shopMessage.textContent =
+    `${weapon.name} 구매 중...`;
+  renderShop();
+
+  try {
+    const { error } = await supabase.rpc(
+      "purchase_weapon",
+      { p_weapon_id: weapon.id }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    await loadProfile();
+    shopMessage.textContent =
+      `${weapon.name}을(를) 구매했습니다!`;
+  } catch (error) {
+    console.error(error);
+    shopMessage.textContent =
+      `구매 실패: ${error.message}`;
+  } finally {
+    shopBusy = false;
+    renderShop();
+  }
+}
+
+async function equipWeapon(weaponId) {
+  if (shopBusy || !currentProfile) {
+    return;
+  }
+
+  shopBusy = true;
+  shopMessage.textContent = weaponId
+    ? "검을 장착하는 중..."
+    : "장착을 해제하는 중...";
+  renderShop();
+
+  try {
+    const { error } = await supabase.rpc(
+      "equip_weapon",
+      { p_weapon_id: weaponId }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    await loadProfile();
+
+    const weapon = getWeapon(weaponId);
+    shopMessage.textContent = weapon
+      ? `${weapon.name}을(를) 장착했습니다!`
+      : "검 장착을 해제했습니다.";
+  } catch (error) {
+    console.error(error);
+    shopMessage.textContent =
+      `장착 실패: ${error.message}`;
+  } finally {
+    shopBusy = false;
+    renderShop();
+  }
 }
 
 
@@ -871,6 +1144,10 @@ async function showBattleScreen(level) {
   );
 
   gameScreen.classList.add(
+    "hidden"
+  );
+
+  shopScreen.classList.add(
     "hidden"
   );
 
@@ -960,7 +1237,8 @@ async function startBattle() {
     heroHp =
       HERO_MAX_HP;
 
-    attackPower = 1;
+    attackPower =
+      1 + getEquippedWeaponAttack();
 
     battleFinished = false;
 
@@ -1512,7 +1790,8 @@ function resetBattleVariables() {
   heroHp =
     HERO_MAX_HP;
 
-  attackPower = 1;
+  attackPower =
+    1 + getEquippedWeaponAttack();
 
   battleFinished = true;
   battleLoading = false;

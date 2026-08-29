@@ -5,37 +5,354 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>수학 몬스터 대모험 - 레벨 선택</title>
 </head>
+
 <body>
-  <main class="game-page">
+
+  <!-- =====================================================
+       레벨 선택 화면
+  ====================================================== -->
+  <main
+    id="levelScreen"
+    class="game-page"
+  >
+
     <header class="game-header">
+
       <div>
         <h1>수학 몬스터 대모험</h1>
-        <p id="userEmail">로그인 확인 중...</p>
+
+        <p>
+          사용자:
+          <span id="userEmail">
+            로그인 확인 중...
+          </span>
+        </p>
       </div>
+
 
       <div class="player-info">
-        <div>⭐ 별: <span id="stars">0</span></div>
-        <div>🏆 레벨: <span id="playerLevel">1</span></div>
-        <button id="logoutBtn">로그아웃</button>
+
+        <div>
+          ⭐ 별:
+          <span id="stars">0</span>
+        </div>
+
+        <div>
+          🏆 레벨:
+          <span id="playerLevel">1</span>
+        </div>
+
+        <button
+          id="openShopBtn"
+          type="button"
+        >
+          🏪 상점
+        </button>
+
+        <button
+          id="logoutBtn"
+          type="button"
+        >
+          로그아웃
+        </button>
+
       </div>
+
     </header>
 
+
     <section class="world-section">
-      <h2 id="worldTitle">월드 1 : 초원의 시작</h2>
 
-      <div class="world-buttons" id="worldButtons"></div>
+      <h2 id="worldTitle">
+        월드 1 : 초원의 시작
+      </h2>
 
-      <div class="level-grid" id="levelGrid"></div>
+
+      <div
+        class="world-buttons"
+        id="worldButtons"
+      ></div>
+
+
+      <div
+        class="level-grid"
+        id="levelGrid"
+      ></div>
+
     </section>
 
+
     <nav class="game-menu">
-      <button>⚔️ 전투</button>
-      <button>🎁 상점</button>
-      <button>🛡️ 용병</button>
-      <button>📖 도감</button>
+
+      <button type="button">
+        ⚔️ 전투
+      </button>
+
+      <button
+        id="bottomShopBtn"
+        type="button"
+      >
+        🎁 상점
+      </button>
+
+      <button
+        type="button"
+        disabled
+      >
+        🛡️ 용병
+      </button>
+
+      <button
+        type="button"
+        disabled
+      >
+        📖 도감
+      </button>
+
     </nav>
+
   </main>
 
-  <script type="module" src="/src/game.js"></script>
+
+  <!-- =====================================================
+       상점 화면
+  ====================================================== -->
+  <section
+    id="shopScreen"
+    class="shop-screen hidden"
+  >
+
+    <!-- 상단 -->
+    <header class="shop-topbar">
+
+      <button
+        id="shopBackBtn"
+        class="shop-back-btn"
+        type="button"
+      >
+        ←
+      </button>
+
+
+      <h1>
+        상점
+      </h1>
+
+
+      <div class="shop-stars">
+
+        ⭐ 보유 별
+
+        <strong id="shopStarCount">
+          0
+        </strong>
+
+      </div>
+
+    </header>
+
+
+    <main class="shop-main">
+
+      <!-- 왼쪽 메뉴 -->
+      <aside class="shop-side-menu">
+
+        <button
+          class="shop-menu active"
+          type="button"
+        >
+          ⚔️ 무기
+        </button>
+
+
+        <button
+          class="shop-menu"
+          type="button"
+          disabled
+        >
+          🛡️ 방패
+        </button>
+
+
+        <button
+          class="shop-menu"
+          type="button"
+          disabled
+        >
+          🪖 갑옷
+        </button>
+
+
+        <button
+          class="shop-menu"
+          type="button"
+          disabled
+        >
+          🧪 아이템
+        </button>
+
+
+        <button
+          class="shop-menu"
+          type="button"
+          disabled
+        >
+          🏪 특별 상점
+        </button>
+
+      </aside>
+
+
+      <!-- 상점 내용 -->
+      <section class="shop-content">
+
+        <!-- 대장장이 -->
+        <div class="blacksmith-area">
+
+          <div class="blacksmith">
+            👨‍🏭
+          </div>
+
+
+          <div class="blacksmith-text">
+
+            <h2>
+              대장장이
+            </h2>
+
+            <p>
+              더 강한 검을 장착하고<br />
+              수학 몬스터를 물리쳐 보세요!
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- 무기 효과 -->
+        <div class="weapon-effect-box">
+
+          <h2>
+            ⚔️ 무기 효과
+          </h2>
+
+          <p>
+            장착한 검의 공격력이<br />
+            실제 전투 공격력에 추가됩니다.
+          </p>
+
+        </div>
+
+
+        <!-- 현재 장착 무기 -->
+        <section class="equipped-box">
+
+          <h2>
+            현재 장착 무기
+          </h2>
+
+
+          <div class="equipped-info">
+
+            <span
+              id="equippedWeaponIcon"
+              class="equipped-icon"
+            >
+              🚫
+            </span>
+
+
+            <div>
+
+              <strong id="equippedWeaponName">
+                장착한 검 없음
+              </strong>
+
+              <p>
+                공격력 +
+                <span id="equippedWeaponAttack">
+                  0
+                </span>
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <button
+            id="unequipBtn"
+            type="button"
+            disabled
+          >
+            장착 해제
+          </button>
+
+        </section>
+
+
+        <!-- 무기 목록 -->
+        <section class="weapon-section">
+
+          <h2>
+            검 구매
+          </h2>
+
+
+          <div
+            id="weaponGrid"
+            class="weapon-grid"
+          ></div>
+
+        </section>
+
+      </section>
+
+    </main>
+
+
+    <!-- 하단 메뉴 -->
+    <footer class="shop-bottom-menu">
+
+      <button
+        id="shopToLevelBtn"
+        type="button"
+      >
+        🗺️ 레벨 선택
+      </button>
+
+      <button
+        class="active"
+        type="button"
+        disabled
+      >
+        🏪 상점
+      </button>
+
+      <button
+        type="button"
+        disabled
+      >
+        🏆 업적
+      </button>
+
+      <button
+        type="button"
+        disabled
+      >
+        ⚙️ 설정
+      </button>
+
+    </footer>
+
+  </section>
+
+
+  <script
+    type="module"
+    src="/src/game.js"
+  ></script>
+
 </body>
 </html>
