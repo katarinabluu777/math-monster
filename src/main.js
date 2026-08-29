@@ -183,6 +183,7 @@ let battleLoading = false;
 let battleRestarting = false;
 let battleSaving = false;
 let shopBusy = false;
+let shopUsesProfileColumns = true;
 
 
 /* =========================
@@ -746,6 +747,8 @@ async function loadProfile() {
     );
   }
 
+  shopUsesProfileColumns = true;
+
   let { data, error } =
     await supabase
       .from("profiles")
@@ -769,6 +772,8 @@ async function loadProfile() {
     );
 
   if (shopColumnsAreMissing) {
+    shopUsesProfileColumns = false;
+
     const fallbackResult = await supabase
       .from("profiles")
       .select("email, stars, level")
@@ -807,12 +812,22 @@ async function loadProfile() {
     purchasedWeapons:
       Array.isArray(data.purchased_weapons)
         ? data.purchased_weapons
-        : [],
+        : Array.isArray(
+            currentUser.user_metadata
+              ?.purchased_weapons
+          )
+          ? currentUser.user_metadata
+              .purchased_weapons
+          : [],
 
     equippedWeapon:
       typeof data.equipped_weapon === "string"
         ? data.equipped_weapon
-        : null,
+        : typeof currentUser.user_metadata
+              ?.equipped_weapon === "string"
+          ? currentUser.user_metadata
+              .equipped_weapon
+          : null,
 
     /*
       1~51까지 허용합니다.
@@ -1117,6 +1132,16 @@ async function purchaseWeapon(weapon) {
   renderShop();
 
   try {
+    if (!shopUsesProfileColumns) {
+      await purchaseWeaponWithUserMetadata(
+        weapon
+      );
+
+      shopMessage.textContent =
+        `${weapon.name}을(를) 구매했습니다!`;
+      return;
+    }
+
     let { error } = await supabase.rpc(
       "purchase_weapon",
       { p_weapon_id: weapon.id }
@@ -1187,6 +1212,70 @@ async function purchaseWeapon(weapon) {
   }
 }
 
+async function purchaseWeaponWithUserMetadata(
+  weapon
+) {
+  const previousStars =
+    currentProfile.stars;
+  const newStars =
+    previousStars - weapon.price;
+
+  if (newStars < 0) {
+    throw new Error("별이 부족합니다.");
+  }
+
+  const newPurchasedWeapons = [
+    ...currentProfile.purchasedWeapons,
+    weapon.id
+  ];
+
+  const { data: profileData, error: profileError } =
+    await supabase
+      .from("profiles")
+      .update({ stars: newStars })
+      .eq("id", currentUser.id)
+      .eq("stars", previousStars)
+      .select("stars")
+      .maybeSingle();
+
+  if (profileError) {
+    throw profileError;
+  }
+
+  if (!profileData) {
+    throw new Error(
+      "별 정보가 변경되었습니다. 상점을 다시 열어 주세요."
+    );
+  }
+
+  const { data: authData, error: authError } =
+    await supabase.auth.updateUser({
+      data: {
+        purchased_weapons:
+          newPurchasedWeapons,
+        equipped_weapon:
+          currentProfile.equippedWeapon
+      }
+    });
+
+  if (authError) {
+    await supabase
+      .from("profiles")
+      .update({ stars: previousStars })
+      .eq("id", currentUser.id)
+      .eq("stars", newStars);
+
+    throw authError;
+  }
+
+  currentUser = authData.user || currentUser;
+  currentProfile.stars = newStars;
+  currentProfile.purchasedWeapons =
+    newPurchasedWeapons;
+
+  updateProfileDisplay();
+}
+
 async function equipWeapon(weaponId) {
   if (shopBusy || !currentProfile) {
     return;
@@ -1199,6 +1288,24 @@ async function equipWeapon(weaponId) {
   renderShop();
 
   try {
+    if (!shopUsesProfileColumns) {
+      const { data, error } =
+        await supabase.auth.updateUser({
+          data: {
+            purchased_weapons:
+              currentProfile.purchasedWeapons,
+            equipped_weapon: weaponId
+          }
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      currentUser = data.user || currentUser;
+      currentProfile.equippedWeapon = weaponId;
+      updateProfileDisplay();
+    } else {
     const { error } = await supabase.rpc(
       "equip_weapon",
       { p_weapon_id: weaponId }
@@ -1209,6 +1316,7 @@ async function equipWeapon(weaponId) {
     }
 
     await loadProfile();
+    }
 
     const weapon = getWeapon(weaponId);
     shopMessage.textContent = weapon
