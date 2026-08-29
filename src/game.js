@@ -122,7 +122,7 @@ async function start() {
       return;
     }
 
-    const {
+    let {
       data: profileData,
       error: profileError
     } = await supabase
@@ -132,6 +132,26 @@ async function start() {
       )
       .eq("id", user.id)
       .maybeSingle();
+
+    const shopColumnsAreMissing =
+      profileError &&
+      (
+        profileError.code === "42703" ||
+        /purchased_weapons|equipped_weapon/.test(
+          profileError.message || ""
+        )
+      );
+
+    if (shopColumnsAreMissing) {
+      const fallbackResult = await supabase
+        .from("profiles")
+        .select("id, email, stars, level")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      profileData = fallbackResult.data;
+      profileError = fallbackResult.error;
+    }
 
     if (profileError) {
       console.error(profileError);

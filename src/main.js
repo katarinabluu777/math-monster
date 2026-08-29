@@ -693,7 +693,7 @@ async function loadProfile() {
     );
   }
 
-  const { data, error } =
+  let { data, error } =
     await supabase
       .from("profiles")
       .select(
@@ -701,6 +701,30 @@ async function loadProfile() {
       )
       .eq("id", currentUser.id)
       .maybeSingle();
+
+  /*
+    상점용 SQL을 아직 실행하지 않은 기존 DB에서도
+    로그인과 레벨 선택은 계속 사용할 수 있게 합니다.
+  */
+  const shopColumnsAreMissing =
+    error &&
+    (
+      error.code === "42703" ||
+      /purchased_weapons|equipped_weapon/.test(
+        error.message || ""
+      )
+    );
+
+  if (shopColumnsAreMissing) {
+    const fallbackResult = await supabase
+      .from("profiles")
+      .select("email, stars, level")
+      .eq("id", currentUser.id)
+      .maybeSingle();
+
+    data = fallbackResult.data;
+    error = fallbackResult.error;
+  }
 
   if (error) {
     throw new Error(
