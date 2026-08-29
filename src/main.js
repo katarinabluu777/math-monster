@@ -1117,12 +1117,60 @@ async function purchaseWeapon(weapon) {
   renderShop();
 
   try {
-    const { error } = await supabase.rpc(
+    let { error } = await supabase.rpc(
       "purchase_weapon",
       { p_weapon_id: weapon.id }
     );
 
+    const purchaseFunctionIsMissing =
+      error &&
+      (
+        error.code === "PGRST202" ||
+        /purchase_weapon.*schema cache/i.test(
+          error.message || ""
+        )
+      );
+
+    if (purchaseFunctionIsMissing) {
+      const purchasedWeapons = [
+        ...currentProfile.purchasedWeapons,
+        weapon.id
+      ];
+
+      const fallbackResult = await supabase
+        .from("profiles")
+        .update({
+          stars:
+            currentProfile.stars - weapon.price,
+          purchased_weapons: purchasedWeapons
+        })
+        .eq("id", currentUser.id)
+        .eq("stars", currentProfile.stars)
+        .select("stars")
+        .maybeSingle();
+
+      error = fallbackResult.error;
+
+      if (!error && !fallbackResult.data) {
+        throw new Error(
+          "별 정보가 변경되었습니다. 상점을 다시 열어 주세요."
+        );
+      }
+    }
+
     if (error) {
+      if (
+        error.code === "42703" ||
+        error.code === "PGRST204" ||
+        /purchased_weapons/.test(
+          error.message || ""
+        )
+      ) {
+        throw new Error(
+          "상점 데이터베이스 설정이 필요합니다. 최신 supabase.sql을 실행해 주세요."
+        );
+      }
+
       throw error;
     }
 
