@@ -118,12 +118,6 @@ button:disabled {
   gap: 12px;
 }
 
-.top-buttons .top-shop-button {
-  color: #3a2500;
-  background: linear-gradient(#ffe56b, #f39a16);
-  box-shadow: 0 4px 0 #9a5700;
-}
-
 .title-area {
   position: relative;
   z-index: 2;

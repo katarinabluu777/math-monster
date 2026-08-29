@@ -183,7 +183,6 @@ let battleLoading = false;
 let battleRestarting = false;
 let battleSaving = false;
 let shopBusy = false;
-let shopReturnScreen = "game";
 
 
 /* =========================
@@ -328,24 +327,7 @@ attackBtn.addEventListener(
 
 document
   .getElementById("openShopBtn")
-  .addEventListener(
-    "click",
-    () => showShopScreen("game")
-  );
-
-document
-  .getElementById("loginShopBtn")
-  .addEventListener(
-    "click",
-    () => showShopScreen("login")
-  );
-
-document
-  .getElementById("loginBottomShopBtn")
-  .addEventListener(
-    "click",
-    () => showShopScreen("login")
-  );
+  .addEventListener("click", showShopScreen);
 
 document
   .getElementById("closeShopBtn")
@@ -1007,19 +989,20 @@ function getEquippedWeaponAttack() {
   )?.attack || 0;
 }
 
-function showShopScreen(returnScreen = "game") {
+function showShopScreen() {
+  if (!currentProfile) {
+    return;
+  }
+
   stopMonsterAttack();
   battleFinished = true;
-  shopReturnScreen = returnScreen;
 
   loginScreen.classList.add("hidden");
   gameScreen.classList.add("hidden");
   battleScreen.classList.add("hidden");
   shopScreen.classList.remove("hidden");
 
-  shopMessage.textContent = currentProfile
-    ? ""
-    : "구매와 장착을 하려면 먼저 로그인하세요.";
+  shopMessage.textContent = "";
   renderShop();
 
   window.scrollTo({
@@ -1029,14 +1012,6 @@ function showShopScreen(returnScreen = "game") {
 }
 
 function closeShopScreen() {
-  if (
-    shopReturnScreen === "login" ||
-    !currentProfile
-  ) {
-    showLoginScreen();
-    return;
-  }
-
   showGameScreen();
 }
 
@@ -1076,10 +1051,7 @@ function renderShop() {
     const card = document.createElement("article");
     card.className = "weapon-card";
 
-    if (!currentProfile) {
-      button.textContent = "로그인 필요";
-      button.disabled = true;
-    } else if (equipped) {
+    if (equipped) {
       card.classList.add("equipped");
     }
 
